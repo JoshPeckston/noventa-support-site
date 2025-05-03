@@ -15,9 +15,9 @@ if (STRIPE_SECRET_KEY) {
 }
 
 export default async function SuccessPage({ 
-  searchParams 
+  searchParams, 
 }: { 
-  searchParams?: { [key: string]: string | string[] | undefined } 
+  searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const sessionId = searchParams?.session_id as string | undefined;
 
