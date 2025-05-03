@@ -4,14 +4,25 @@ import React from 'react';
 
 export default function Home() {
   const handleGetSupportClick = () => {
-    const discordAuthUrl = process.env.NEXT_PUBLIC_DISCORD_AUTH_URL;
-    if (discordAuthUrl) {
-      console.log('Redirecting to Discord OAuth...');
-      window.location.href = discordAuthUrl;
-    } else {
-      console.error('Discord Auth URL not configured!');
-      alert('Configuration error: Unable to initiate support request.');
+    // Read the public client ID
+    const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
+
+    if (!clientId) {
+      console.error('Discord Client ID not configured!');
+      alert('Configuration error: Unable to initiate support request. Client ID missing.');
+      return; // Stop execution if client ID is missing
     }
+
+    // Dynamically determine the redirect URI based on the current host
+    const redirectUri = encodeURIComponent(`${window.location.origin}/api/auth/discord/callback`);
+    const scope = encodeURIComponent('identify email'); // Add other scopes if needed
+    const responseType = 'code';
+
+    // Construct the dynamic URL
+    const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}`;
+
+    console.log('Redirecting to Discord OAuth:', discordAuthUrl);
+    window.location.href = discordAuthUrl;
   };
 
   return (
