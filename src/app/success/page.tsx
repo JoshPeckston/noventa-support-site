@@ -1,18 +1,18 @@
 import Link from 'next/link';
-import Stripe from 'stripe';
+// import Stripe from 'stripe'; // Commented out for testing
 
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-const NEXT_PUBLIC_DISCORD_SERVER_INVITE_URL = process.env.NEXT_PUBLIC_DISCORD_SERVER_INVITE_URL || '#'; 
-const BASE_URL = process.env.NEXTAUTH_URL; // Get base URL from env
+// const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+// const NEXT_PUBLIC_DISCORD_SERVER_INVITE_URL = process.env.NEXT_PUBLIC_DISCORD_SERVER_INVITE_URL || '#'; 
+// const BASE_URL = process.env.NEXTAUTH_URL; // Get base URL from env
 
-let stripe: Stripe | null = null;
-if (STRIPE_SECRET_KEY) {
-  stripe = new Stripe(STRIPE_SECRET_KEY, {
-    apiVersion: '2024-06-20', 
-  });
-} else {
-  console.error('Stripe Secret Key is not configured.');
-}
+// let stripe: Stripe | null = null;
+// if (STRIPE_SECRET_KEY) {
+//   stripe = new Stripe(STRIPE_SECRET_KEY, {
+//     apiVersion: '2024-06-20', 
+//   });
+// } else {
+//   console.error('Stripe Secret Key is not configured.');
+// }
 
 // Define the props type explicitly, including params
 type SuccessPageProps = {
@@ -20,9 +20,27 @@ type SuccessPageProps = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
+// Use the defined interface
 export default async function SuccessPage({ searchParams }: SuccessPageProps) {
   const sessionId = searchParams?.session_id as string | undefined;
 
+  // --- Start Simplified Logic ---
+  console.log("Simplified Success Page Reached");
+  console.log("Session ID from searchParams:", sessionId);
+
+  return (
+    <div className="container mx-auto px-4 py-8 text-center">
+      <h1 className="text-3xl font-bold mb-4">Simplified Success Page</h1>
+      <p className="mb-4">Checking build process...</p>
+      <p className="mb-4">Session ID: {sessionId ? sessionId : 'Not found'}</p>
+      <Link href="/" className="text-blue-600 hover:underline">
+        Go back to Home
+      </Link>
+    </div>
+  );
+  // --- End Simplified Logic ---
+
+  /* --- Start Original Logic (Commented Out) ---
   let status: 'success' | 'processing' | 'error' = 'processing';
   let message: string = 'Processing your payment information...';
   let clientReferenceId: string | null = null;
@@ -51,11 +69,10 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
             if (!BASE_URL) {
               throw new Error('NEXTAUTH_URL environment variable is not set.');
             }
-            // Construct absolute URL
-            const apiUrl = new URL('/api/discord', BASE_URL).toString(); 
-            console.log(`Calling API URL: ${apiUrl}`);
+            const apiEndpoint = `${BASE_URL}/api/discord`;
+            console.log(`Calling API endpoint: ${apiEndpoint}`);
 
-            const response = await fetch(apiUrl, { 
+            const response = await fetch(apiEndpoint, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -63,76 +80,79 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
               body: JSON.stringify({ discordUserId: clientReferenceId }),
             });
 
-            const result = await response.json();
+            const responseData = await response.json(); 
+            console.log('API Response:', responseData);
 
-            if (response.ok && result.success) {
-              status = 'success';
-              message = result.message || 'Role assigned successfully!'; 
-            } else {
-              status = 'error';
-              message = `Payment confirmed, but failed to assign Discord role: ${result.message || 'Unknown API error'}. Please contact support.`;
-              console.error('API call to assign role failed:', result);
+            if (!response.ok) {
+              throw new Error(responseData.error || `API call failed with status: ${response.status}`);
             }
-          } catch (fetchError: any) {
-             console.error('Error calling /api/discord:', fetchError);
-             status = 'error';
-             message = `Payment confirmed, but encountered an error contacting the role assignment service: ${fetchError.message}. Please contact support.`;
-          }
+            
+            status = 'success';
+            message = 'Payment successful! Your Discord role has been assigned. You can now access the exclusive channels.';
 
+          } catch (apiError: any) {
+            console.error('Error calling Discord API:', apiError);
+            status = 'error'; // Set status to error but payment was successful
+            message = `Payment was successful, but there was an error assigning your Discord role: ${apiError.message}. Please contact support with your Discord ID (${clientReferenceId}).`;
+          }
         } else {
+          console.error('Client Reference ID (Discord User ID) not found in Stripe session.');
           status = 'error';
-          message = 'Payment successful, but could not find Discord User ID to assign role. Please contact support.';
-          console.error('Stripe session missing client_reference_id despite paid status.', session);
+          message = 'Payment successful, but we could not retrieve your Discord ID to assign the role. Please contact support.';
         }
+      } else if (session.status === 'open') {
+          status = 'processing';
+          message = 'Your payment is still processing. Please wait a moment or check your email.';
+      } else if (session.status === 'complete'){
+          // This case might happen if webhook hasn't confirmed payment yet but session is complete
+          status = 'success'; // Assume success if complete, role assignment attempt follows
+           if (clientReferenceId) {
+             // Re-attempt role assignment logic here or indicate potential delay
+               message = 'Payment session complete. Attempting to assign Discord role... If you dont see access shortly, please contact support.';
+                // Consider placing the API call logic here as well for robustness
+           } else {
+               status = 'error';
+               message = 'Payment session complete, but could not retrieve Discord ID. Contact support.';
+           }
       } else {
-        status = 'processing';
-        message = `Payment status is '${paymentStatus}'. Please wait for payment confirmation or contact support if this persists.`;
-        console.log(`Payment status for session ${sessionId} is ${paymentStatus}.`);
+        // Handle other statuses like 'expired', 'canceled' if necessary
+        status = 'error';
+        message = `Payment status: ${paymentStatus}. Your payment was not successful. Please try again or contact support.`;
       }
     } catch (error: any) {
-      console.error(`Error retrieving session or assigning role for ${sessionId}:`, error);
+      console.error('Error retrieving Stripe session or processing payment:', error);
       status = 'error';
-      message = `An error occurred: ${error.message}. Please contact support.`;
+      message = `An error occurred while processing your payment: ${error.message}. Please contact support.`;
     }
   }
 
-  const statusStyles = {
-    success: { bg: 'bg-green-50', border: 'border-green-300', title: 'text-green-700', text: 'text-gray-700' },
-    processing: { bg: 'bg-yellow-50', border: 'border-yellow-300', title: 'text-yellow-700', text: 'text-gray-700' },
-    error: { bg: 'bg-red-50', border: 'border-red-300', title: 'text-red-700', text: 'text-gray-700' },
-  };
-
-  const currentStyle = statusStyles[status];
-
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gray-50">
-      <div className={`text-center p-10 border ${currentStyle.border} rounded-lg ${currentStyle.bg} shadow-md max-w-md`}>
-        <h1 className={`text-3xl font-bold ${currentStyle.title} mb-4`}>
-          {status === 'success' && 'Success!'}
-          {status === 'processing' && 'Processing...'}
-          {status === 'error' && 'Error!'}
-        </h1>
-        <p className={`text-lg ${currentStyle.text} mb-6`}>
-          {message}
-        </p>
-        {(status === 'success' || status === 'error') && (
-            <Link
-                href={NEXT_PUBLIC_DISCORD_SERVER_INVITE_URL}
-                className="mt-4 inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200"
+    <div className="container mx-auto px-4 py-8 text-center">
+      <h1 className={`text-3xl font-bold mb-4 ${status === 'success' ? 'text-green-600' : status === 'error' ? 'text-red-600' : 'text-yellow-600'}`}>
+        {status === 'success' ? 'Payment Successful!' : status === 'error' ? 'Payment Error' : 'Payment Processing'}
+      </h1>
+      <p className="mb-4">{message}</p>
+      
+      {status === 'success' && (
+        <>
+           <p className="mb-4">Welcome! You should now have access to the Noventa Support subscriber channels on Discord.</p>
+           <a 
+              href={NEXT_PUBLIC_DISCORD_SERVER_INVITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:bg-indigo-700 mb-4"
             >
-                Return to Discord
-            </Link>
-        )}
-         {process.env.NODE_ENV !== 'production' && (
-          <div className="mt-6 text-xs text-gray-500 text-left">
-            <p>Debug Info:</p>
-            <p>Session ID: {sessionId || 'N/A'}</p>
-            <p>Payment Status: {paymentStatus || 'N/A'}</p>
-            <p>Client Ref ID: {clientReferenceId || 'N/A'}</p>
-            <p>Final Status: {status}</p>
-          </div>
-        )}
-      </div>
-    </main>
+              Go to Discord Server
+            </a>
+        </>
+      )}
+      
+      {(status === 'error' || status === 'processing') && (
+         <Link href="/" className="text-blue-600 hover:underline">
+           Return to Homepage
+         </Link>
+      )}
+    </div>
   );
+  --- End Original Logic (Commented Out) --- */
 }
