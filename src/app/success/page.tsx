@@ -14,11 +14,11 @@ if (STRIPE_SECRET_KEY) {
   console.error('Stripe Secret Key is not configured.');
 }
 
-interface SuccessPageProps {
-  searchParams: { [key: string]: string | string[] | undefined };
-}
-
-export default async function SuccessPage({ searchParams }: SuccessPageProps) {
+export default async function SuccessPage({ 
+  searchParams 
+}: { 
+  searchParams?: { [key: string]: string | string[] | undefined } 
+}) {
   const sessionId = searchParams?.session_id as string | undefined;
 
   let status: 'success' | 'processing' | 'error' = 'processing';
