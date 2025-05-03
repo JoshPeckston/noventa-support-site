@@ -14,11 +14,13 @@ if (STRIPE_SECRET_KEY) {
   console.error('Stripe Secret Key is not configured.');
 }
 
-export default async function SuccessPage({ 
-  searchParams, 
-}: { 
+// Define the props type explicitly, including params
+type SuccessPageProps = {
+  params: { [key: string]: string }; // For dynamic routes, empty here
   searchParams: { [key: string]: string | string[] | undefined };
-}) {
+};
+
+export default async function SuccessPage({ searchParams }: SuccessPageProps) {
   const sessionId = searchParams?.session_id as string | undefined;
 
   let status: 'success' | 'processing' | 'error' = 'processing';
