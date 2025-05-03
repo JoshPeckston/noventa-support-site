@@ -1,4 +1,4 @@
-export const runtime = 'nodejs'; // Force Node.js runtime
+// export const runtime = 'nodejs'; // Force Node.js runtime
 
 import { NextResponse, NextRequest } from 'next/server';
 import { assignDiscordRole, sendDiscordNotification } from '@/lib/discord';
