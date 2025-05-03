@@ -1,46 +1,32 @@
 import Link from 'next/link';
-// import Stripe from 'stripe'; // Commented out for testing
+import Stripe from 'stripe'; 
 
-// const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-// const NEXT_PUBLIC_DISCORD_SERVER_INVITE_URL = process.env.NEXT_PUBLIC_DISCORD_SERVER_INVITE_URL || '#'; 
-// const BASE_URL = process.env.NEXTAUTH_URL; // Get base URL from env
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY; 
+const NEXT_PUBLIC_DISCORD_SERVER_INVITE_URL = process.env.NEXT_PUBLIC_DISCORD_SERVER_INVITE_URL || '#'; 
+const BASE_URL = process.env.NEXTAUTH_URL; 
 
-// let stripe: Stripe | null = null;
-// if (STRIPE_SECRET_KEY) {
-//   stripe = new Stripe(STRIPE_SECRET_KEY, {
-//     apiVersion: '2024-06-20', 
-//   });
-// } else {
-//   console.error('Stripe Secret Key is not configured.');
-// }
+let stripe: Stripe | null = null; 
+if (STRIPE_SECRET_KEY) { 
+  stripe = new Stripe(STRIPE_SECRET_KEY, { 
+    apiVersion: '2024-06-20', 
+  }); 
+} else { 
+  console.error('Stripe Secret Key is not configured.'); 
+} 
 
-// Define the props type explicitly, including params
+// Define the props type explicitly, typing searchParams as Promise
 type SuccessPageProps = {
-  params: { [key: string]: string }; // For dynamic routes, empty here
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: { [key: string]: string }; 
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-// Use the defined interface
-export default function SuccessPage({ searchParams }: SuccessPageProps) {
+// Restore async keyword
+export default async function SuccessPage({ params, searchParams: searchParamsPromise }: SuccessPageProps) {
+  // Await the searchParams promise
+  const searchParams = await searchParamsPromise;
   const sessionId = searchParams?.session_id as string | undefined;
 
-  // --- Start Simplified Logic ---
-  console.log("Simplified Success Page Reached");
-  console.log("Session ID from searchParams:", sessionId);
-
-  return (
-    <div className="container mx-auto px-4 py-8 text-center">
-      <h1 className="text-3xl font-bold mb-4">Simplified Success Page</h1>
-      <p className="mb-4">Checking build process...</p>
-      <p className="mb-4">Session ID: {sessionId ? sessionId : 'Not found'}</p>
-      <Link href="/" className="text-blue-600 hover:underline">
-        Go back to Home
-      </Link>
-    </div>
-  );
-  // --- End Simplified Logic ---
-
-  /* --- Start Original Logic (Commented Out) ---
+  // --- Restore Original Logic ---
   let status: 'success' | 'processing' | 'error' = 'processing';
   let message: string = 'Processing your payment information...';
   let clientReferenceId: string | null = null;
@@ -92,7 +78,7 @@ export default function SuccessPage({ searchParams }: SuccessPageProps) {
 
           } catch (apiError: any) {
             console.error('Error calling Discord API:', apiError);
-            status = 'error'; // Set status to error but payment was successful
+            status = 'error'; 
             message = `Payment was successful, but there was an error assigning your Discord role: ${apiError.message}. Please contact support with your Discord ID (${clientReferenceId}).`;
           }
         } else {
@@ -104,18 +90,14 @@ export default function SuccessPage({ searchParams }: SuccessPageProps) {
           status = 'processing';
           message = 'Your payment is still processing. Please wait a moment or check your email.';
       } else if (session.status === 'complete'){
-          // This case might happen if webhook hasn't confirmed payment yet but session is complete
-          status = 'success'; // Assume success if complete, role assignment attempt follows
+          status = 'success'; 
            if (clientReferenceId) {
-             // Re-attempt role assignment logic here or indicate potential delay
-               message = 'Payment session complete. Attempting to assign Discord role... If you dont see access shortly, please contact support.';
-                // Consider placing the API call logic here as well for robustness
+             message = 'Payment session complete. Attempting to assign Discord role... If you dont see access shortly, please contact support.';
            } else {
                status = 'error';
                message = 'Payment session complete, but could not retrieve Discord ID. Contact support.';
            }
       } else {
-        // Handle other statuses like 'expired', 'canceled' if necessary
         status = 'error';
         message = `Payment status: ${paymentStatus}. Your payment was not successful. Please try again or contact support.`;
       }
@@ -154,5 +136,5 @@ export default function SuccessPage({ searchParams }: SuccessPageProps) {
       )}
     </div>
   );
-  --- End Original Logic (Commented Out) --- */
+  // --- End Original Logic ---
 }
