@@ -11,22 +11,18 @@ if (STRIPE_SECRET_KEY) {
     apiVersion: '2024-06-20', 
   }); 
 } else { 
-  console.error('Stripe Secret Key is not configured.'); 
+  console.error('Stripe Secret Key is not configured.');
 } 
 
-// Define the props type explicitly, typing searchParams as Promise
-type SuccessPageProps = {
+export default async function SuccessPage({ 
+  params, 
+  searchParams 
+}: {
   params: { [key: string]: string }; 
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-};
-
-// Restore async keyword
-export default async function SuccessPage({ params, searchParams: searchParamsPromise }: SuccessPageProps) {
-  // Await the searchParams promise
-  const searchParams = await searchParamsPromise;
+  searchParams: { [key: string]: string | string[] | undefined }; 
+}) {
   const sessionId = searchParams?.session_id as string | undefined;
 
-  // --- Restore Original Logic ---
   let status: 'success' | 'processing' | 'error' = 'processing';
   let message: string = 'Processing your payment information...';
   let clientReferenceId: string | null = null;
@@ -136,5 +132,4 @@ export default async function SuccessPage({ params, searchParams: searchParamsPr
       )}
     </div>
   );
-  // --- End Original Logic ---
 }
