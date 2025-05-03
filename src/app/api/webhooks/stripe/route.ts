@@ -91,14 +91,6 @@ async function assignDiscordRole(discordUserId: string): Promise<void> {
     }
 }
 
-// IMPORTANT: Need to disable Next.js body parsing for this route
-// so we can read the raw body for signature verification.
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 // Function to read raw body from ReadableStream
 async function streamToString(stream: ReadableStream<Uint8Array>): Promise<string> {
   const reader = stream.getReader();
