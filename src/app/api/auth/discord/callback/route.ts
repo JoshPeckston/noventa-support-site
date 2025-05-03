@@ -1,37 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
-const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
-const NEXTAUTH_URL = process.env.NEXTAUTH_URL; // Your base URL
-
-if (!DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET || !NEXTAUTH_URL) {
-  throw new Error('Missing Discord environment variables');
-}
-
-const REDIRECT_URI = `${NEXTAUTH_URL}/api/auth/discord/callback`;
-
 export async function GET(request: NextRequest) {
+  const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
+  const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
+  const NEXTAUTH_URL = process.env.NEXTAUTH_URL; // Your base URL
+
+  if (!DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET || !NEXTAUTH_URL) {
+    console.error('Discord callback error: Missing required environment variables.');
+    return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
+  }
+
+  const REDIRECT_URI = `${NEXTAUTH_URL}/api/auth/discord/callback`;
+
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
 
   if (!code) {
     console.error('Discord callback error: No code received.');
-    // Redirect to an error page or home with an error query param
     return NextResponse.redirect(new URL('/?error=discord_auth_failed', request.url));
   }
 
   console.log('Received Discord authorization code:', code);
 
   try {
-    // 1. Exchange code for access token
     const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        client_id: DISCORD_CLIENT_ID!,
-        client_secret: DISCORD_CLIENT_SECRET!,
+        client_id: DISCORD_CLIENT_ID,
+        client_secret: DISCORD_CLIENT_SECRET,
         grant_type: 'authorization_code',
         code: code,
         redirect_uri: REDIRECT_URI,
@@ -46,9 +45,8 @@ export async function GET(request: NextRequest) {
 
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
-    console.log('Received Discord Access Token:', accessToken ? 'OK' : 'MISSING'); // Don't log the actual token
+    console.log('Received Discord Access Token:', accessToken ? 'OK' : 'MISSING'); 
 
-    // 2. Fetch user info
     let discordUserId: string | null = null;
     try {
       const userResponse = await fetch('https://discord.com/api/users/@me', {
@@ -59,26 +57,20 @@ export async function GET(request: NextRequest) {
 
       if (!userResponse.ok) {
         console.error('Error fetching Discord user info:', userResponse.status, userResponse.statusText);
-        // Optionally handle this error more gracefully - maybe redirect with error?
       } else {
-          const userData = await userResponse.json();
-          discordUserId = userData.id;
-          console.log('Fetched Discord User Info:', { id: userData.id, username: userData.username, email: userData.email });
-          // TODO: Store userData.id, userData.email, etc. in session or database if needed beyond checkout
+        const userData = await userResponse.json();
+        discordUserId = userData.id;
+        console.log('Fetched Discord User Info:', { id: userData.id, username: userData.username, email: userData.email });
       }
     } catch (fetchError) {
-        console.error('Network or other error fetching Discord user info:', fetchError);
-        // Handle this error
+      console.error('Network or other error fetching Discord user info:', fetchError);
     }
 
     if (!discordUserId) {
-      // Redirect with error if we couldn't get the Discord ID, as it's needed for role assignment
       console.error('Failed to obtain Discord User ID. Cannot proceed to payment.');
       return NextResponse.redirect(new URL('/?error=discord_user_id_fetch_failed', request.url));
     }
 
-    // 3. Redirect to Stripe Checkout creation
-    // Pass the fetched Discord User ID as a query parameter
     const checkoutUrl = new URL('/api/payment/create-checkout', request.url);
     checkoutUrl.searchParams.set('discordUserId', discordUserId);
     console.log(`Redirecting to Stripe checkout for Discord User ${discordUserId}: ${checkoutUrl.toString()}`);
