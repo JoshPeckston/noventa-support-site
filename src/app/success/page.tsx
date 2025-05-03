@@ -21,7 +21,7 @@ type SuccessPageProps = {
 };
 
 // Use the defined interface
-export default async function SuccessPage({ searchParams }: SuccessPageProps) {
+export default function SuccessPage({ searchParams }: SuccessPageProps) {
   const sessionId = searchParams?.session_id as string | undefined;
 
   // --- Start Simplified Logic ---
