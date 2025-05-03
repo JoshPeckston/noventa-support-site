@@ -108,6 +108,12 @@ async function streamToString(stream: ReadableStream<Uint8Array>): Promise<strin
 }
 
 export async function POST(request: NextRequest) {
+  // Check if the webhook secret is configured
+  if (!STRIPE_WEBHOOK_SECRET) {
+    console.error('Webhook Error: STRIPE_WEBHOOK_SECRET is not set in environment variables.');
+    return NextResponse.json({ error: 'Webhook configuration error.' }, { status: 500 });
+  }
+
   console.log('>>> STRIPE WEBHOOK /api/webhooks/stripe RECEIVED A POST REQUEST <<<');
 
   console.log('Stripe webhook endpoint hit!');
