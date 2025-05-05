@@ -6,7 +6,7 @@ import React from 'react';
 export default function Home() {
   const handleGetSupportClick = () => {
     // Log the value directly to the browser console for debugging
-    console.log('NEXT_PUBLIC_DISCORD_CLIENT_ID:', process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID);
+    // console.log('NEXT_PUBLIC_DISCORD_CLIENT_ID:', process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID);
 
     const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
 

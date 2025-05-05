@@ -70,7 +70,7 @@ export default async function SuccessPage({
             }
             
             status = 'success';
-            message = 'Payment successful! Your Discord role has been assigned. You can now access the exclusive channels.';
+            message = 'Payment successful! You are now a Phantom Stream member. Your Discord role has been assigned. You can now access the exclusive channels.';
 
           } catch (apiError: any) {
             console.error('Error calling Discord API:', apiError);
