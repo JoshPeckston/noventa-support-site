@@ -28,18 +28,6 @@ export default function Home() {
   };
 
   return (
-    // ... rest of your component JSX ...
-        <button
-          onClick={handleGetSupportClick}
-          // ... other button props ...
-        >
-          Get Support
-        </button>
-    // ... rest of your component JSX ...
-  );
-}
-
-  return (
     <main className="flex min-h-screen flex-col items-center bg-gradient-to-b from-blue-50 to-white text-gray-800">
 
       {/* Hero Section */}
@@ -49,13 +37,12 @@ export default function Home() {
         </h1>
         <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
           Your Trusted Partner for Secure Digital Setup & Support.
-          Get expert help with streaming devices, VPNs, Wi-Fi, software, and more.
         </p>
         <button
           onClick={handleGetSupportClick}
-          className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200 transform hover:scale-105"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition duration-300 ease-in-out shadow-md hover:shadow-lg"
         >
-          Get Secure Support Now
+          Get Support
         </button>
       </section>
 
