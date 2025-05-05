@@ -1,29 +1,43 @@
+// src/app/page.tsx
 'use client';
 
 import React from 'react';
 
 export default function Home() {
   const handleGetSupportClick = () => {
-    // Read the public client ID
+    // Log the value directly to the browser console for debugging
+    console.log('NEXT_PUBLIC_DISCORD_CLIENT_ID:', process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID);
+
     const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
 
     if (!clientId) {
-      console.error('Discord Client ID not configured!');
-      alert('Configuration error: Unable to initiate support request. Client ID missing.');
-      return; // Stop execution if client ID is missing
+      console.error('Discord Auth URL not configured!');
+      alert('Configuration error: Unable to initiate support request.'); // Or handle this more gracefully
+      return;
     }
 
     // Dynamically determine the redirect URI based on the current host
     const redirectUri = encodeURIComponent(`${window.location.origin}/api/auth/discord/callback`);
-    const scope = encodeURIComponent('identify email'); // Add other scopes if needed
     const responseType = 'code';
+    const scope = encodeURIComponent('identify email guilds.join'); // Added guilds.join
 
-    // Construct the dynamic URL
     const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}`;
+    console.log('Redirecting to Discord:', discordAuthUrl); // Log the URL being generated
 
-    console.log('Redirecting to Discord OAuth:', discordAuthUrl);
     window.location.href = discordAuthUrl;
   };
+
+  return (
+    // ... rest of your component JSX ...
+        <button
+          onClick={handleGetSupportClick}
+          // ... other button props ...
+        >
+          Get Support
+        </button>
+    // ... rest of your component JSX ...
+  );
+}
 
   return (
     <main className="flex min-h-screen flex-col items-center bg-gradient-to-b from-blue-50 to-white text-gray-800">
